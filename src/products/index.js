@@ -52,6 +52,12 @@ ProductsRouter.get("/", async (req, res, next) => {
       where: { ...searchQuery },
       limit: req.query.limit,
       offset: req.query.offset,
+      order: [
+        [
+          req.query.orderby ? req.query.orderby : "createdAt",
+          req.query.direction ? req.query.direction.toUpperCase() : "ASC",
+        ],
+      ],
     });
     if (req.query.limit) {
       const fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
