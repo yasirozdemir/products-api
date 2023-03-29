@@ -14,9 +14,44 @@ ProductsRouter.post("/", async (req, res, next) => {
   }
 });
 
+// // without search queries
+// ProductsRouter.get("/", async (req, res, next) => {
+//   try {
+//     const { count, rows } = await ProductsModel.findAndCountAll();
+//     res.send({ numberOfProducts: count, products: rows });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+// with search queries
 ProductsRouter.get("/", async (req, res, next) => {
   try {
-    const { count, rows } = await ProductsModel.findAndCountAll();
+    const searchQuery = {};
+    if (req.query.minPrice || req.query.maxPrice) {
+      const priceFilterArray = [];
+      if (req.query.minPrice) {
+        priceFilterArray.push(req.query.minPrice);
+        searchQuery.price = { [Op.gte]: priceFilterArray };
+      }
+      if (req.query.maxPrice) {
+        priceFilterArray.push(req.query.maxPrice);
+        searchQuery.price = { [Op.lte]: priceFilterArray };
+      }
+      if (req.query.minPrice && req.query.maxPrice) {
+        searchQuery.price = { [Op.between]: priceFilterArray };
+      }
+    }
+    if (req.query.name) {
+      searchQuery.name = { [Op.iLike]: `%${req.query.name}%` };
+    }
+    if (req.query.category) {
+      searchQuery.category = { [Op.iLike]: req.query.category };
+    }
+
+    const { count, rows } = await ProductsModel.findAndCountAll({
+      where: { ...searchQuery },
+    });
     res.send({ numberOfProducts: count, products: rows });
   } catch (error) {
     next(error);
@@ -25,7 +60,8 @@ ProductsRouter.get("/", async (req, res, next) => {
 
 ProductsRouter.get("/:productId", async (req, res, next) => {
   try {
-    const product = await ProductsModel.findByPk(req.params.productId); // -> (...productId, { attributes: { exclude: ["createdAt", "updatedAt"] }) using attributes you can decide what to send or not to send as a response
+    const product = await ProductsModel.findByPk(req.params.productId);
+    // -> (...productId, { attributes: { exclude: ["createdAt", "updatedAt"] }) using attributes you can decide what to send or not to send as a response
     if (product) res.send(product);
     else
       next(
