@@ -48,11 +48,25 @@ ProductsRouter.get("/", async (req, res, next) => {
     if (req.query.category) {
       searchQuery.category = { [Op.iLike]: req.query.category };
     }
-
     const { count, rows } = await ProductsModel.findAndCountAll({
       where: { ...searchQuery },
+      limit: req.query.limit,
+      offset: req.query.offset,
     });
-    res.send({ numberOfProducts: count, products: rows });
+    if (req.query.limit) {
+      const fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
+      const links = {};
+      res.send({
+        numberOfProducts: count,
+        numberOfPages: Math.ceil(count / req.query.limit),
+        products: rows,
+      });
+    } else {
+      res.send({
+        numberOfProducts: count,
+        products: rows,
+      });
+    }
   } catch (error) {
     next(error);
   }
