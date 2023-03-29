@@ -59,8 +59,8 @@ ProductsRouter.get("/", async (req, res, next) => {
         ],
       ],
     });
+    const fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
     if (req.query.limit) {
-      const fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
       const links = {};
       if (req.query.offset) {
         if (parseInt(req.query.offset) !== 0) {
@@ -83,18 +83,28 @@ ProductsRouter.get("/", async (req, res, next) => {
       } else {
         links.next = `${fullUrl}&offset=${parseInt(req.query.limit)}`;
       }
-      res.send({
+      const response = {
         numberOfProducts: count,
         numberOfPages: Math.ceil(count / req.query.limit),
         links,
         products: rows,
-      });
-    } else {
-      res.send({
+      };
+      res.send(response);
+    } else if (req.query.offset) {
+      const response = {
         numberOfProducts: count,
+        links: {
+          prev: fullUrl.replace(`offset=${req.query.offset}`, "offset=0"),
+        },
         products: rows,
-      });
+      };
+      res.send(response);
     }
+    const response = {
+      numberOfProducts: count,
+      products: rows,
+    };
+    res.send(response);
   } catch (error) {
     next(error);
   }
