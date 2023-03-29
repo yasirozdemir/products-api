@@ -18,3 +18,5 @@ export const pgConnect = async () => {
     process.exit(1);
   }
 };
+
+export default sequelize;

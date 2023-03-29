@@ -1,10 +1,14 @@
 import Express from "express";
+import createHttpError from "http-errors";
+import ProductsModel from "./model.js";
+import { Op } from "sequelize";
 
 const ProductsRouter = Express.Router();
 
 ProductsRouter.post("/", async (req, res, next) => {
   try {
-    res.status(201).send();
+    const { productId } = await ProductsModel.create(req.body);
+    res.status(201).send({ productId });
   } catch (error) {
     next(error);
   }
@@ -12,7 +16,8 @@ ProductsRouter.post("/", async (req, res, next) => {
 
 ProductsRouter.get("/", async (req, res, next) => {
   try {
-    res.send();
+    const { count, rows } = await ProductsModel.findAndCountAll();
+    res.send({ numberOfProducts: count, products: rows });
   } catch (error) {
     next(error);
   }
@@ -20,7 +25,15 @@ ProductsRouter.get("/", async (req, res, next) => {
 
 ProductsRouter.get("/:productId", async (req, res, next) => {
   try {
-    res.send();
+    const product = await ProductsModel.findByPk(req.params.productId); // -> (...productId, { attributes: { exclude: ["createdAt", "updatedAt"] }) using attributes you can decide what to send or not to send as a response
+    if (product) res.send(product);
+    else
+      next(
+        createHttpError(
+          404,
+          `Product with id ${req.params.productId} not found!`
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -28,7 +41,18 @@ ProductsRouter.get("/:productId", async (req, res, next) => {
 
 ProductsRouter.put("/:productId", async (req, res, next) => {
   try {
-    res.send();
+    const [numberOfUpdatedRows, updatedRecords] = await ProductsModel.update(
+      req.body,
+      { where: { productId: req.params.productId }, returning: true }
+    );
+    if (numberOfUpdatedRows === 1) res.send(updatedRecords[0]);
+    else
+      next(
+        createHttpError(
+          404,
+          `Product with id ${req.params.productId} not found!`
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -36,7 +60,17 @@ ProductsRouter.put("/:productId", async (req, res, next) => {
 
 ProductsRouter.delete("/:productId", async (req, res, next) => {
   try {
-    res.status(204).send();
+    const numberOfDeletedProducts = await ProductsModel.destroy({
+      where: { productId: req.params.productId },
+    });
+    if (numberOfDeletedProducts) res.status(204).send();
+    else
+      next(
+        createHttpError(
+          404,
+          `Product with id ${req.params.productId} not found!`
+        )
+      );
   } catch (error) {
     next(error);
   }
