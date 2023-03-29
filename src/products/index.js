@@ -1,7 +1,7 @@
 import Express, { response } from "express";
 import createHttpError from "http-errors";
 import ProductsModel from "./model.js";
-import { Op } from "sequelize";
+import { filterProductsMw } from "../lib/middlewares.js";
 
 const ProductsRouter = Express.Router();
 
@@ -25,31 +25,10 @@ ProductsRouter.post("/", async (req, res, next) => {
 // });
 
 // with search queries
-ProductsRouter.get("/", async (req, res, next) => {
+ProductsRouter.get("/", filterProductsMw, async (req, res, next) => {
   try {
-    const searchQuery = {};
-    if (req.query.minPrice || req.query.maxPrice) {
-      const priceFilterArray = [];
-      if (req.query.minPrice) {
-        priceFilterArray.push(req.query.minPrice);
-        searchQuery.price = { [Op.gte]: priceFilterArray };
-      }
-      if (req.query.maxPrice) {
-        priceFilterArray.push(req.query.maxPrice);
-        searchQuery.price = { [Op.lte]: priceFilterArray };
-      }
-      if (req.query.minPrice && req.query.maxPrice) {
-        searchQuery.price = { [Op.between]: priceFilterArray };
-      }
-    }
-    if (req.query.name) {
-      searchQuery.name = { [Op.iLike]: `%${req.query.name}%` };
-    }
-    if (req.query.category) {
-      searchQuery.category = { [Op.iLike]: req.query.category };
-    }
     const { count, rows } = await ProductsModel.findAndCountAll({
-      where: { ...searchQuery },
+      where: { ...res.searchQuery },
       limit: req.query.limit,
       offset: req.query.offset,
       order: [
