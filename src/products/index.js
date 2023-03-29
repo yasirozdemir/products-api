@@ -1,4 +1,4 @@
-import Express from "express";
+import Express, { response } from "express";
 import createHttpError from "http-errors";
 import ProductsModel from "./model.js";
 import { Op } from "sequelize";
@@ -59,6 +59,10 @@ ProductsRouter.get("/", async (req, res, next) => {
         ],
       ],
     });
+    let response = {
+      numberOfProducts: count,
+      products: rows,
+    };
     const fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
     if (req.query.limit) {
       const links = {};
@@ -83,27 +87,19 @@ ProductsRouter.get("/", async (req, res, next) => {
       } else {
         links.next = `${fullUrl}&offset=${parseInt(req.query.limit)}`;
       }
-      const response = {
-        numberOfProducts: count,
+      response = {
         numberOfPages: Math.ceil(count / req.query.limit),
         links,
-        products: rows,
+        ...response,
       };
-      res.send(response);
     } else if (req.query.offset) {
-      const response = {
-        numberOfProducts: count,
+      response = {
         links: {
           prev: fullUrl.replace(`offset=${req.query.offset}`, "offset=0"),
         },
-        products: rows,
+        ...response,
       };
-      res.send(response);
     }
-    const response = {
-      numberOfProducts: count,
-      products: rows,
-    };
     res.send(response);
   } catch (error) {
     next(error);
