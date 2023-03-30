@@ -108,7 +108,19 @@ ProductsRouter.get("/", filterProductsMw, async (req, res, next) => {
 
 ProductsRouter.get("/:productId", async (req, res, next) => {
   try {
-    const product = await ProductsModel.findByPk(req.params.productId);
+    const product = await ProductsModel.findByPk(req.params.productId, {
+      include: [
+        {
+          model: CategoriesModel,
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+        {
+          model: ReviewsModel,
+          attributes: ["reviewId", "content", "userId"],
+        },
+      ],
+    });
     // -> (...productId, { attributes: { exclude: ["createdAt", "updatedAt"] }) using attributes you can decide what to send or not to send as a response
     if (product) res.send(product);
     else
