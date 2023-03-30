@@ -1,4 +1,4 @@
-import Express, { response } from "express";
+import Express from "express";
 import createHttpError from "http-errors";
 import ProductsModel from "./model.js";
 import { filterProductsMw } from "../lib/middlewares.js";
