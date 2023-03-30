@@ -10,5 +10,5 @@
 
 ## TODOs
 
-- Update category search filter for products
+- Update category search filter for products for updating categories array
 - Fix put on products
