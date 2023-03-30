@@ -19,11 +19,15 @@ ReviewsRouter.post("/:productId/reviews", async (req, res, next) => {
 ReviewsRouter.get("/:productId/reviews", async (req, res, next) => {
   try {
     const { count, rows } = await ReviewsModel.findAndCountAll({
-      attributes: { exclude: ["createdAt", "updatedAt"] },
-      include: {
-        model: UsersModel,
-        attributes: { exclude: ["createdAt", "updatedAt"] },
+      where: {
+        productId: req.params.productId,
       },
+      include: [
+        {
+          model: UsersModel,
+          attributes: { exclude: ["createdAt", "updatedAt"] },
+        },
+      ],
     });
     res.send({ numberOfReviews: count, reviews: rows });
   } catch (error) {
