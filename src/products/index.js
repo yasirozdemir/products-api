@@ -4,6 +4,7 @@ import ProductsModel from "./model.js";
 import { filterProductsMw } from "../lib/middlewares.js";
 import ProductCategoryModel from "../product_category/model.js";
 import CategoriesModel from "../categories/model.js";
+import ReviewsModel from "../reviews/model.js";
 
 const ProductsRouter = Express.Router();
 
@@ -45,6 +46,10 @@ ProductsRouter.get("/", filterProductsMw, async (req, res, next) => {
           model: CategoriesModel,
           attributes: ["name"],
           through: { attributes: [] },
+        },
+        {
+          model: ReviewsModel,
+          attributes: ["reviewId", "content", "userId"],
         },
       ],
       order: [
