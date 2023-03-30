@@ -1,5 +1,7 @@
 import { DataTypes } from "sequelize";
+import CategoriesModel from "../categories/model.js";
 import sequelize from "../dbConfig.js";
+import ProductCategoryModel from "../product_category/model.js";
 
 const ProductsModel = sequelize.define("product", {
   productId: {
@@ -8,10 +10,6 @@ const ProductsModel = sequelize.define("product", {
     defaultValue: DataTypes.UUIDV4,
   },
   name: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
-  },
-  category: {
     type: DataTypes.STRING(50),
     allowNull: false,
   },
@@ -28,6 +26,15 @@ const ProductsModel = sequelize.define("product", {
     allowNull: false,
   },
   // timestamps are true by default (createdAt, updatedAt)
+});
+
+ProductsModel.belongsToMany(CategoriesModel, {
+  through: ProductCategoryModel,
+  foreignKey: { name: "productId", allowNull: false },
+});
+CategoriesModel.belongsToMany(ProductsModel, {
+  through: ProductCategoryModel,
+  foreignKey: { name: "categoryId", allowNull: false },
 });
 
 export default ProductsModel;

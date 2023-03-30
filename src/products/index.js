@@ -2,12 +2,21 @@ import Express, { response } from "express";
 import createHttpError from "http-errors";
 import ProductsModel from "./model.js";
 import { filterProductsMw } from "../lib/middlewares.js";
+import ProductCategoryModel from "../product_category/model.js";
+import CategoriesModel from "../categories/model.js";
 
 const ProductsRouter = Express.Router();
 
 ProductsRouter.post("/", async (req, res, next) => {
   try {
     const { productId } = await ProductsModel.create(req.body);
+    if (req.body.categories) {
+      await ProductCategoryModel.bulkCreate(
+        req.body.categories?.map((category) => {
+          return { productId, categoryId: category };
+        })
+      );
+    }
     res.status(201).send({ productId });
   } catch (error) {
     next(error);
@@ -31,6 +40,13 @@ ProductsRouter.get("/", filterProductsMw, async (req, res, next) => {
       where: { ...res.searchQuery },
       limit: req.query.limit,
       offset: req.query.offset,
+      include: [
+        {
+          model: CategoriesModel,
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+      ],
       order: [
         [
           req.query.orderby ? req.query.orderby : "createdAt",
