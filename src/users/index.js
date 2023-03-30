@@ -1,4 +1,5 @@
 import Express from "express";
+import createHttpError from "http-errors";
 import ReviewsModel from "../reviews/model.js";
 import UsersModel from "./model.js";
 
@@ -19,7 +20,7 @@ UsersRouter.get("/", async (req, res, next) => {
       attributes: { exclude: ["createdAt", "updatedAt"] },
       include: {
         model: ReviewsModel,
-        attributes: ["reviewId"],
+        attributes: ["reviewId", "content"],
       },
     });
     res.send({ numberOfUsers: count, users: rows });
@@ -28,28 +29,55 @@ UsersRouter.get("/", async (req, res, next) => {
   }
 });
 
-// UsersRouter.get("/:id", async (req, res, next) => {
-//   try {
-//     res.send();
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+UsersRouter.get("/:userId", async (req, res, next) => {
+  try {
+    const user = await UsersModel.findByPk(req.params.userId, {
+      attributes: { exclude: ["createdAt", "updatedAt"] },
+      include: {
+        model: ReviewsModel,
+        attributes: ["reviewId", "content"],
+      },
+    });
+    if (user) res.send(user);
+    else
+      next(
+        createHttpError(404, `User with id ${req.params.userId} not found!`)
+      );
+  } catch (error) {
+    next(error);
+  }
+});
 
-// UsersRouter.put("/:id", async (req, res, next) => {
-//   try {
-//     res.send();
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+UsersRouter.put("/:userId", async (req, res, next) => {
+  try {
+    const [numberOfUpdatedRows, updatedRecords] = await UsersModel.update(
+      req.body,
+      { where: { userId: req.params.userId }, returning: true }
+    );
+    if (numberOfUpdatedRows !== 0) res.send(updatedRecords[0]);
+    else
+      next(
+        createHttpError(404, `User with id ${req.params.userId} not found!`)
+      );
+  } catch (error) {
+    next(error);
+  }
+});
 
-// UsersRouter.delete("/:id", async (req, res, next) => {
-//   try {
-//     res.status(204).send();
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+UsersRouter.delete("/:userId", async (req, res, next) => {
+  try {
+    const numberOfDeletedUsers = await UsersModel.destroy({
+      where: { userId: req.params.userId },
+    });
+    if (numberOfDeletedUsers !== 0) res.status(204).send();
+    else
+      next(
+        createHttpError(404, `User with id ${req.params.userId} not found!`)
+      );
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default UsersRouter;
